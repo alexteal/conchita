@@ -23,8 +23,7 @@ int main(){
     while(1){
         print_prefix(visible_directory);
         char* s = read_stdin(BUFFERSIZE);
-        fprint(s);
-        //parse(s,0);
+        parse(s,working_directory,visible_directory);
         free(s);
     } //main input loop
 

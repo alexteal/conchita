@@ -16,11 +16,14 @@ void fprint(const char* s);
 unsigned int skip_space(const char* s, unsigned int index);
 
 // return a dynamic char* of the next word in a string
-char* next_word(const char* s, unsigned int index);
+char* next_word(const char* s, unsigned int* index);
+
+//parse and execute inbuilt commands
+short parse_builtin(const char* s, char* working_directory, char* visible_directory);
 
 //TODO
 //what does this func do
-void parse(const char* s, unsigned int index);
+void parse(const char* s, char *working_directory, char* visible_directory);
 
 // Copy file contents into a string
 //output is dynamic string, don't forget to free(s)
