@@ -1,6 +1,27 @@
 #ifndef READ_H
 #define READ_H
 
+
+//print out the [user]$~ prefix
+void print_prefix(const char* visible_directory);
+
+//store the last part of the directory in a string
+void getvwd(const char* current_path, char* visible_directory);
+
+//easy write to stdout
+void fprint(const char* s);
+
+// return the index of the next nonspace in a string
+//  
+unsigned int skip_space(const char* s, unsigned int index);
+
+// return a dynamic char* of the next word in a string
+char* next_word(const char* s, unsigned int index);
+
+//TODO
+//what does this func do
+void parse(const char* s, unsigned int index);
+
 // Copy file contents into a string
 //output is dynamic string, don't forget to free(s)
 // @param   char*   path    relative string path to read
