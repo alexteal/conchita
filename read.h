@@ -6,7 +6,7 @@
 void print_prefix(const char* visible_directory);
 
 //store the last part of the directory in a string
-void getvwd(const char* current_path, char* visible_directory);
+void getvwd(const char* current_path,char* visible_directory);
 
 //easy write to stdout
 void fprint(const char* s);
@@ -23,7 +23,13 @@ short parse_builtin(const char* s, char* working_directory, char* visible_direct
 
 //TODO
 //what does this func do
-void parse(const char* s, char *working_directory, char* visible_directory);
+void parse(const char* s, char* working_directory, char* visible_directory);
+
+void change_dir(const char *s,char *working_directory,char *visible_directory,unsigned int *index_of_next_word);
+
+
+//print out everything in the current directory
+void ls(const char *working_directory);
 
 // Copy file contents into a string
 //output is dynamic string, don't forget to free(s)

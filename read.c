@@ -4,10 +4,25 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <string.h>
-#include <limits.h>
+#include <limits.h>  //path limits
+#include <errno.h>
 #include "read.h"
+#include <dirent.h>  // ls command
 #define BUFFERSIZE 16
 
+
+//feature list
+//  cd works fine
+//  exit ends program
+//  next_word functions as expected
+//  home directory is default now, and denoted by ~
+//
+
+//TODO
+// build ls
+//  may require new library, and struct
+//
+//
 
 //returns are 
 // -1   failure
@@ -16,7 +31,6 @@
 short parse_builtin(const char* s,char* working_directory, char* visible_directory){
     unsigned int index_of_next_word = 0;
     char *cmd = next_word(s,&index_of_next_word);
-    printf("\nIndex of word is %d \n",index_of_next_word);
     unsigned short num_commands = 4;
     char* commands[num_commands];
     commands[0] = "cd";
@@ -30,41 +44,31 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
             break;
         } // if s is in commands
     }
+    free(cmd);
     switch(index){
         case 0: //cd
-            fprint("changing directory\n");
-            char* word = next_word(s,&index_of_next_word);
-            printf("\nindex is : %d",index_of_next_word);
-            //fprint("\n NEXT WORD IS : ");
-            //
-            //
-            //
-            // lets break it down
-            // current issue is that 
-            // index_of_next_word is too far
-            //
-            // so maybe next_word function is broken?
-            // if we can get proper next word, then i think it'll work
-            //
-            //fprint(word);
-            //fprint("\n");
-            //attempt dir change
-            chdir(word);
-            getcwd(working_directory,PATH_MAX);
-            //fprint(working_directory);
-            //fprint("\n");
-            getvwd(working_directory,visible_directory);
-            //fprint(visible_directory);
-            //fprint("\n");
+            change_dir(s,working_directory,visible_directory,&index_of_next_word);
             return 1;
-            
+
             break;
         case 1: //ls
+            /*
+            DIR *d;
+            struct dirent *dir;
+            d = opendir(".");
+            if (d) {
+                while ((dir = readdir(d)) != NULL) {
+                    printf("%s\n", dir->d_name);
+                }
+                closedir(d);
+            }
+            return(0);
+            */
             break;
         case 2: //h
             break;
         case 3: //exit
-            fprint("\n Closing shell...\n");
+            fprint("Closing conchita...\n");
             exit(0);
             break;
         default:
@@ -81,22 +85,26 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
 //  one to do system commands
 //  one to do inbuilt commands
 //
+//
 void parse(const char* s,char* working_directory, char* visible_directory){
     //char* current_word = next_word(s,index);  
     //free(current_word);
     short code = parse_builtin(s,working_directory, visible_directory);
     if(code>-1){
         if(code==1)
-            fprint("worked like a charm");
+            return;
+        //fprint("worked like a charm");
 
     }
     else{
-        fprint("builtin parse failure");
+        fprint("builtin parse failure\n");
     }
+    fprint("command not found: ");
+    fprint(s);
     return;
 
 }
-//fast write to stdout
+//fast write to stdout with linebreak;
 void fprint(const char* s){
     write(STDOUT_FILENO,s,strlen(s));
 }
@@ -107,16 +115,33 @@ void print_prefix(const char* visible_directory){
     fprint(" % "); //fancy close
 }
 
-void change_dir(const char* new_path, char* working_directory, char* visible_directory){
-    for(int i = 0; i<strlen(working_directory)&&i<strlen(new_path); i++){
-        working_directory[i] = new_path[i];
-    }//update current directory
-    getvwd(working_directory,visible_directory); //update visible directory
-    return;
+void ls(const char *working_directory){
+    
+}
+
+void change_dir(const char *s,char *working_directory,char *visible_directory, unsigned int *index_of_next_word)
+{
+    char* word = next_word(s,index_of_next_word);
+    //attempt dir change
+    if(chdir(word)!=0){
+        fprint(strerror(errno));
+        fprint("\n");
+    } //dir change and error handling
+    getcwd(working_directory,PATH_MAX);
+    getvwd(working_directory,visible_directory);
+    free(word);
 }
 
 //get visible working directory
 void getvwd(const char* current_path, char* visible_directory){
+    char* home_dir = getenv("HOME");
+    if(home_dir!=NULL){
+        if(strcmp(home_dir,current_path)==0){
+            visible_directory[0] = '~';
+            visible_directory[1] = '\0';
+            return;
+        } // is inside home directory
+    } //home directory is testable
     unsigned short index;
     for(index = strlen(current_path); index>0; index--){
         if(current_path[index] == '/')
@@ -149,12 +174,12 @@ char* next_word(const char* s, unsigned int* index){
     while(!isspace(s[*index])){
         (*index)++; //pointers are black magic and i hate them
     } //increment *index to end of word
-    char* word = malloc((*index-begin)*sizeof(char));
-    for(int i = begin; i<*index; i++){
-        word[i] = s[i]; //store word
-        printf("%c%c",word[i],s[i]);
-    }
-    printf("\n next word is: %s \n",word);
+    unsigned int difference = *index-begin; // a world of difference here,, idk
+    char* word = malloc((difference)*sizeof(char));
+    for(int i = 0; i<difference; i++){
+        word[i] = s[begin++]; //store word
+    } //assign buffer to word
+    word[*index] = '\0'; //close string
     return word;
 }
 
@@ -170,8 +195,6 @@ char* resize(char* s, unsigned int size){
     return "";
 }
 
-//TODO
-//add error handling
 char* read_stdin(int buffer_size){
     char *s = malloc(buffer_size);
     char buff[buffer_size];
