@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <stdbool.h> //booleans
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <string.h>
 #include <limits.h>  //path limits
-#include <errno.h>
-#include "read.h"
+#include <errno.h>   //error codes
+#include "read.h"    //Header file for this thing
 #include <dirent.h>  // ls command
 #define BUFFERSIZE 16
 
@@ -52,18 +53,8 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
 
             break;
         case 1: //ls
-            /*
-            DIR *d;
-            struct dirent *dir;
-            d = opendir(".");
-            if (d) {
-                while ((dir = readdir(d)) != NULL) {
-                    printf("%s\n", dir->d_name);
-                }
-                closedir(d);
-            }
-            return(0);
-            */
+            ls(working_directory,0); //change second value to 1 for "ls -a"
+            return 1;
             break;
         case 2: //h
             break;
@@ -89,47 +80,108 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
 void parse(const char* s,char* working_directory, char* visible_directory){
     //char* current_word = next_word(s,index);  
     //free(current_word);
+    //
+    //exit code from parse_builtin
     short code = parse_builtin(s,working_directory, visible_directory);
     if(code>-1){
         if(code==1)
             return;
-        //fprint("worked like a charm");
-
-    }
+    } //command was at least recognized 
     else{
         fprint("builtin parse failure\n");
-    }
+    } //error code handling
+
+   // add forks/ exec here. 
+
     fprint("command not found: ");
     fprint(s);
     return;
 
 }
+
+//take a string, break it into individual strings and remove - if it's at the 
+//beginning of a word. Skip first word if its a command
+char** string_to_args(const char* s, unsigned short argcount){
+    char** empty;
+    return empty;
+}
+
 //fast write to stdout with linebreak;
-void fprint(const char* s){
+void fprint(const char* s){ 
     write(STDOUT_FILENO,s,strlen(s));
 }
 
 void print_prefix(const char* visible_directory){
     fprint("[csci-1730] ");
     fprint(visible_directory);
-    fprint(" % "); //fancy close
+    fprint(" $ "); //fancy close
 }
 
-void ls(const char *working_directory){
-    
+void ls(const char *working_directory, bool list_all){
+    // BEGIN PARTIALLY BORROWED BLOCK
+    //##########################################################################
+      struct dirent *de;  // Pointer for directory entry
+    // opendir() returns a pointer of DIR type. 
+    DIR *dr = opendir(working_directory);
+    if (dr == NULL)  // opendir returns NULL if couldn't open directory
+    {
+        fprint("Could not open current directory" );
+        return;
+    }
+    // Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html
+    // for readdir()
+    while ((de = readdir(dr)) != NULL){ //prints all in dir
+        for(unsigned short i = 0; i<4&&(de = readdir(dr)) != NULL; i++){
+            char* filename = de->d_name;
+            if(!list_all){
+                while(filename[0]=='.'&&(de = readdir(dr)) != NULL){ //skip '.' files
+                    filename = de->d_name;
+                    //fprint(filename);
+                }
+                if(filename[0]=='.') //catch sneaky . files
+                    continue;
+                fprint(filename);
+            }
+            //fprint("\t");
+            fprint("\n");
+        }
+        //fprint("\n");
+    }
+    closedir(dr);   
+    //##########################################################################
+    // END PARTIALLY BORROWED BLOCK
+    // https://www.geeksforgeeks.org/c-program-list-files-sub-directories-directory/
 }
 
-void change_dir(const char *s,char *working_directory,char *visible_directory, unsigned int *index_of_next_word)
+
+//If refactor this,
+//  here's an idea
+//  instead of hardcoded chdir to home if ~
+//
+//  modify original string to replace ~ as home path and continue. 
+//
+void change_dir(const char *s,char *work,char *vis, unsigned int *index)
 {
-    char* word = next_word(s,index_of_next_word);
+    char* word = next_word(s,index);
+    if(word[0]=='~'||strlen(word)<1){ //change dir to home with 'cd ~' or  'cd'
+        if(chdir(getenv("HOME"))!=0){
+            fprint(strerror(errno));
+            fprint("\n");
+        } //attempt dir change
+        getcwd(work,PATH_MAX);
+        getvwd(work,vis);
+        free(word);
+        return;
+    }
     //attempt dir change
     if(chdir(word)!=0){
         fprint(strerror(errno));
         fprint("\n");
     } //dir change and error handling
-    getcwd(working_directory,PATH_MAX);
-    getvwd(working_directory,visible_directory);
+    getcwd(work,PATH_MAX);
+    getvwd(work,vis);
     free(word);
+    return;
 }
 
 //get visible working directory

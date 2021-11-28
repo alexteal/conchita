@@ -25,11 +25,14 @@ short parse_builtin(const char* s, char* working_directory, char* visible_direct
 //what does this func do
 void parse(const char* s, char* working_directory, char* visible_directory);
 
+//break a string into arguments. ignore first word
+char** string_to_args(const char* s, unsigned short argcount);
+
 void change_dir(const char *s,char *working_directory,char *visible_directory,unsigned int *index_of_next_word);
 
 
 //print out everything in the current directory
-void ls(const char *working_directory);
+void ls(const char *working_directory, bool list_all);
 
 // Copy file contents into a string
 //output is dynamic string, don't forget to free(s)

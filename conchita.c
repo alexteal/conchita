@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdbool.h>
 #include "read.h"
 #include <limits.h>
 #define BUFFERSIZE 16
