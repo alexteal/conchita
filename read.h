@@ -29,10 +29,12 @@ void parse(const char* s, char* working_directory, char* visible_directory);
 unsigned int count_words(const char* s);
 
 //break a string into arguments. ignore first word
-char** string_to_args(const char* s, unsigned short argcount);
+char** string_to_args(const char* s,const unsigned short argcount);
 
 void change_dir(const char *s,char *working_directory,char *visible_directory,unsigned int *index_of_next_word);
 
+//fork, look for bin, exec, return 1 for success, 0 no file, -1 failed exec
+short what_the_fork(const char* s);
 
 //print out everything in the current directory
 void ls(const char *working_directory, bool list_all);
@@ -63,4 +65,9 @@ char* resize(char* s, unsigned int size);
 //@return   char*           string  containing standard in.
 char* read_stdin(int buffer_size);
 
+
+//DEBUG FUNCTIONS
+//#############################################################################
+
+void print_2d_array(const char** argv, const int argc);
 #endif

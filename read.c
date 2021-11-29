@@ -93,15 +93,15 @@ void parse(const char* s,char* working_directory, char* visible_directory){
 
    // add forks/ exec here. 
     unsigned int argc = count_words(s);
-    char** args = string_to_args(s,argc);
+    char** argv = string_to_args(s,argc); //so i can do getopt() now
+
     for(int i = 0; i<argc; i++){
-        fprint(args[i]);
+        fprint(argv[i]);
         fprint("\n");
     }
-    printf("%d",argc);
     for(int i = 0; i<argc; i++)
-        free(args[i]);
-    free(args);
+        free(argv[i]);
+    free(argv);
     fprint("command not found: ");
     fprint(s);
     return;
@@ -110,17 +110,34 @@ void parse(const char* s,char* working_directory, char* visible_directory){
 
 //take a string, break it into individual strings and remove - if it's at the 
 //beginning of a word. Skip first word if its a commanda
-char** string_to_args(const char* s, unsigned short argcount){
+char** string_to_args(const char* s,const unsigned short argc){
     unsigned int index = 0;
     char** argv; //may need to malloc?
-    argv = malloc(sizeof(char*)*argcount);
-    for(int i = 0; i<argcount; i++){
+    argv = malloc(sizeof(char*)*argc);
+    for(int i = 0; i<argc; i++){
         argv[i] = malloc(sizeof(char)*FILENAME_MAX);
     } //now need to free this fancilly
-    for(int i = 0; i<strlen(s)&&(i+1<argcount); i++){
+    for(int i = 0; i<strlen(s)&&(i<argc); i++){ //don't add random +1 unless you know what you're doing doofus
         argv[i] = next_word(s,&index);
     }
     return argv;
+}
+
+short what_the_fork(const char* s){
+    char* cmd = malloc(strlen(s)*sizeof(char));
+    unsigned int index = 0;
+    cmd = next_word(s,&index);
+    short pid = fork();
+    if(pid==-1){
+        fprint(strerror(errno));
+    } //fork failure
+    if(pid==0){
+
+    } //child process exec
+    else{
+
+    } //parent process exec
+    return -1;
 }
 
 //count all words in a string
@@ -253,10 +270,8 @@ unsigned int skip_space(const char* s, unsigned int index){
 //add to read.h
 char* next_word(const char* s, unsigned int* index){
     unsigned int begin=skip_space(s,*index); //beginning of next word
-    while(isspace(s[*index]))
-        index++;
     *index = begin;
-    while(!isspace(s[*index])&&*index<strlen(s)){
+    while(!isspace(s[*index])){
         (*index)++; //pointers are black magic and i hate them
     } //increment *index to end of word
     unsigned int difference = *index-begin; // a world of difference here,, idk
@@ -264,7 +279,6 @@ char* next_word(const char* s, unsigned int* index){
     for(int i = 0; i<difference; i++){
         word[i] = s[begin++]; //store word
     } //assign buffer to word
-    fprint(" | ");
     word[*index] = '\0'; //close string
     return word;
 }
@@ -357,3 +371,18 @@ char* read_file_bytes(char* path,int numbytes){ //setting numbytes as unsgined c
     close(fd);
     return file;
 }//return string with plaintext of file
+
+
+//######################################################################
+// DEBUG FUNCTIONS
+// #####################################################################
+
+
+
+void print_2d_array(const char** argv, const int argc){
+    for(int i = 0; i<argc; i++){
+        fprint(argv[i]);
+        fprint("\n");
+    }
+    return;
+}
