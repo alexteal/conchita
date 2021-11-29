@@ -25,6 +25,9 @@ short parse_builtin(const char* s, char* working_directory, char* visible_direct
 //what does this func do
 void parse(const char* s, char* working_directory, char* visible_directory);
 
+//count all words in s
+unsigned int count_words(const char* s);
+
 //break a string into arguments. ignore first word
 char** string_to_args(const char* s, unsigned short argcount);
 

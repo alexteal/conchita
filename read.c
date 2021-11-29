@@ -92,7 +92,16 @@ void parse(const char* s,char* working_directory, char* visible_directory){
     } //error code handling
 
    // add forks/ exec here. 
-
+    unsigned int argc = count_words(s);
+    char** args = string_to_args(s,argc);
+    for(int i = 0; i<argc; i++){
+        fprint(args[i]);
+        fprint("\n");
+    }
+    printf("%d",argc);
+    for(int i = 0; i<argc; i++)
+        free(args[i]);
+    free(args);
     fprint("command not found: ");
     fprint(s);
     return;
@@ -100,10 +109,32 @@ void parse(const char* s,char* working_directory, char* visible_directory){
 }
 
 //take a string, break it into individual strings and remove - if it's at the 
-//beginning of a word. Skip first word if its a command
+//beginning of a word. Skip first word if its a commanda
 char** string_to_args(const char* s, unsigned short argcount){
-    char** empty;
-    return empty;
+    unsigned int index = 0;
+    char** argv; //may need to malloc?
+    argv = malloc(sizeof(char*)*argcount);
+    for(int i = 0; i<argcount; i++){
+        argv[i] = malloc(sizeof(char)*FILENAME_MAX);
+    } //now need to free this fancilly
+    for(int i = 0; i<strlen(s)&&(i+1<argcount); i++){
+        argv[i] = next_word(s,&index);
+    }
+    return argv;
+}
+
+//count all words in a string
+//currently just counts spaces, which probs isn't best
+unsigned int count_words(const char* s){
+    unsigned int wordcount = 0;
+    for(int i = 0; i < strlen(s); i++){
+        while(!isspace(s[i]))
+            i++;
+        wordcount++;
+        while(isspace(s[i]))
+            i++;
+    }
+    return wordcount;
 }
 
 //fast write to stdout with linebreak;
@@ -222,8 +253,10 @@ unsigned int skip_space(const char* s, unsigned int index){
 //add to read.h
 char* next_word(const char* s, unsigned int* index){
     unsigned int begin=skip_space(s,*index); //beginning of next word
+    while(isspace(s[*index]))
+        index++;
     *index = begin;
-    while(!isspace(s[*index])){
+    while(!isspace(s[*index])&&*index<strlen(s)){
         (*index)++; //pointers are black magic and i hate them
     } //increment *index to end of word
     unsigned int difference = *index-begin; // a world of difference here,, idk
@@ -231,6 +264,7 @@ char* next_word(const char* s, unsigned int* index){
     for(int i = 0; i<difference; i++){
         word[i] = s[begin++]; //store word
     } //assign buffer to word
+    fprint(" | ");
     word[*index] = '\0'; //close string
     return word;
 }
