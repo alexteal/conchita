@@ -92,16 +92,14 @@ void parse(const char* s,char* working_directory, char* visible_directory){
     } //error code handling
 
    // add forks/ exec here. 
+   //
+   //
+    if(what_the_fork(s) == 1){
+        return;
+    }
     unsigned int argc = count_words(s);
     char** argv = string_to_args(s,argc); //so i can do getopt() now
-
-    for(int i = 0; i<argc; i++){
-        fprint(argv[i]);
-        fprint("\n");
-    }
-    for(int i = 0; i<argc; i++)
-        free(argv[i]);
-    free(argv);
+    free_2d(argv,argc); //free
     fprint("command not found: ");
     fprint(s);
     return;
@@ -122,6 +120,13 @@ char** string_to_args(const char* s,const unsigned short argc){
     }
     return argv;
 }
+//free a 2d array easily
+void free_2d(char** s,const unsigned short argc){
+    for(int i = 0; i<argc; i++){
+        free(s[i]);
+    }
+    free(s);
+}
 
 short what_the_fork(const char* s){
     char* cmd = malloc(strlen(s)*sizeof(char));
@@ -130,14 +135,27 @@ short what_the_fork(const char* s){
     short pid = fork();
     if(pid==-1){
         fprint(strerror(errno));
+        return -1;
     } //fork failure
-    if(pid==0){
+    if(pid==0){ //don't change dir acutally, this doesn't work as well as you'd like
+        if(chdir("/bin/")!=0){// dont check if cmd is in bin, just attempt to exec
+            fprint(strerror(errno));
+            fprint("\n");
+        } //dir change and error handling
 
+       //execvp should let us pass the argv thing
+        unsigned short argc = count_words(s);
+        char** argv = string_to_args(s,argc);
+        execvp(cmd,argv);
+        free_2d(argv,argc);
+        exit(0);
+        fprint("should've exited");
     } //child process exec
     else{
-
+        wait(NULL); //wait for process to fail/finish
+        return 1;
     } //parent process exec
-    return -1;
+    return 0;
 }
 
 //count all words in a string
@@ -168,7 +186,7 @@ void print_prefix(const char* visible_directory){
 void ls(const char *working_directory, bool list_all){
     // BEGIN PARTIALLY BORROWED BLOCK
     //##########################################################################
-      struct dirent *de;  // Pointer for directory entry
+    struct dirent *de;  // Pointer for directory entry
     // opendir() returns a pointer of DIR type. 
     DIR *dr = opendir(working_directory);
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
