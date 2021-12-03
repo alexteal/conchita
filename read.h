@@ -31,6 +31,9 @@ unsigned int count_words(const char* s);
 //break a string into arguments. ignore first word
 char** string_to_args(const char* s,const unsigned short argcount);
 
+//new string to args, using split
+char** stas(char* s);
+
 //free STA
 void free_2d(char** s,const unsigned short argc);
 
@@ -73,5 +76,5 @@ char* read_stdin(int buffer_size);
 //DEBUG FUNCTIONS
 //#############################################################################
 
-void print_2d_array(const char** argv, const int argc);
+void print2d(char** argv, const int argc);
 #endif

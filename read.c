@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <ctype.h>
+#include <ctype.h>  
+#include <sys/types.h> //wait()
+#include <sys/wait.h> // wait()
 #include <string.h>
 #include <limits.h>  //path limits
 #include <errno.h>   //error codes
@@ -112,14 +114,35 @@ char** string_to_args(const char* s,const unsigned short argc){
     unsigned int index = 0;
     char** argv; //may need to malloc?
     argv = malloc(sizeof(char*)*argc);
-    for(int i = 0; i<argc; i++){
+    for(int i = 0; i<argc+1; i++){
         argv[i] = malloc(sizeof(char)*FILENAME_MAX);
     } //now need to free this fancilly
+    argv[argc+1] = NULL;
     for(int i = 0; i<strlen(s)&&(i<argc); i++){ //don't add random +1 unless you know what you're doing doofus
         argv[i] = next_word(s,&index);
     }
     return argv;
 }
+//tokenize input
+//this is going to be a null terminated, undertermined size array
+char** sta(char* s){
+    unsigned int length = strlen(s);
+    unsigned int wordcount = count_words(s);
+    char** tok = malloc(wordcount*sizeof(char*));
+    for(int i = 0; i<wordcount+1; i++){
+        tok[i] = malloc(length*wordcount*sizeof(char));
+        printf("%d",i);
+    }
+    char delim[2] = {' ','\n'};
+    char *token = strtok(s,delim); 
+    for(int i = 0;i<wordcount&&token!=NULL; i++){
+        strcpy(tok[i],token); 
+        token = strtok(NULL,delim);
+    } //tokenize string
+    tok[wordcount] = NULL; // This is doing something to the first index of tok despite targeting last index
+    return tok;
+}
+
 //free a 2d array easily
 void free_2d(char** s,const unsigned short argc){
     for(int i = 0; i<argc; i++){
@@ -129,25 +152,30 @@ void free_2d(char** s,const unsigned short argc){
 }
 
 short what_the_fork(const char* s){
-    char* cmd = malloc(strlen(s)*sizeof(char));
-    unsigned int index = 0;
-    cmd = next_word(s,&index);
     short pid = fork();
     if(pid==-1){
         fprint(strerror(errno));
         return -1;
     } //fork failure
     if(pid==0){ //don't change dir acutally, this doesn't work as well as you'd like
-        if(chdir("/bin/")!=0){// dont check if cmd is in bin, just attempt to exec
+        unsigned short argc = count_words(s);
+        char* copy = malloc(strlen(s)*sizeof(char));
+        strcpy(copy,s);
+        char** argv = sta(copy);
+        //char* argv[3] = {"cat","led.sh",NULL}; //test version of argv that should always cat the test file
+        //char** argv = string_to_args(s,argc);
+        //argv[argc+1] = NULL;
+        //char* args[] = {"echo","AAAAA",NULL};
+        //fprint(args[0]);
+        fprint("thread check 1\n");
+        print2d(argv,argc); //prints entire array to stdout
+        fprint("thread check 2\n");
+        //printf("test");
+        if(execvp(argv[0],argv)==-1){ //replaces current thread and execs argv
             fprint(strerror(errno));
             fprint("\n");
-        } //dir change and error handling
-
-       //execvp should let us pass the argv thing
-        unsigned short argc = count_words(s);
-        char** argv = string_to_args(s,argc);
-        execvp(cmd,argv);
-        free_2d(argv,argc);
+        }
+        free_2d(argv,argc); //will not execute unless invalid command
         exit(0);
         fprint("should've exited");
     } //child process exec
@@ -169,6 +197,8 @@ unsigned int count_words(const char* s){
         while(isspace(s[i]))
             i++;
     }
+    if(s[0] == ' ')
+        wordcount--;
     return wordcount;
 }
 
@@ -289,7 +319,7 @@ unsigned int skip_space(const char* s, unsigned int index){
 char* next_word(const char* s, unsigned int* index){
     unsigned int begin=skip_space(s,*index); //beginning of next word
     *index = begin;
-    while(!isspace(s[*index])){
+    while(!isspace(s[*index])&&*index<strlen(s)){
         (*index)++; //pointers are black magic and i hate them
     } //increment *index to end of word
     unsigned int difference = *index-begin; // a world of difference here,, idk
@@ -396,9 +426,9 @@ char* read_file_bytes(char* path,int numbytes){ //setting numbytes as unsgined c
 // #####################################################################
 
 
-
-void print_2d_array(const char** argv, const int argc){
+void print2d(char** argv, const int argc){
     for(int i = 0; i<argc; i++){
+        printf("%d\t",i);
         fprint(argv[i]);
         fprint("\n");
     }

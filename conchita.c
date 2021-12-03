@@ -14,10 +14,13 @@ int main(){
     setvbuf(stdout, NULL, _IONBF, 0); //disable printf() buffer
     char working_directory[PATH_MAX];
     char visible_directory[FILENAME_MAX];
+
     char* home_dir = getenv("HOME");
     unsigned int faux_index = 0; //segfault on static value. Really should've written this better. 
     if(home_dir!=NULL)
         change_dir(home_dir, working_directory, visible_directory, &faux_index); //set to home dir, if dir is known
+
+
     // while loop stdin
     //
     // TODO
