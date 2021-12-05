@@ -125,7 +125,9 @@ char** string_to_args(const char* s,const unsigned short argc){
 }
 //tokenize input
 //this is going to be a null terminated, undertermined size array
-char** sta(char* s){
+#define delim " \t\r\n\a" //delimiters
+
+char **sta(char* s){
     unsigned int length = strlen(s);
     unsigned int wordcount = count_words(s);
     char** tok = malloc(wordcount*sizeof(char*));
@@ -133,14 +135,50 @@ char** sta(char* s){
         tok[i] = malloc(length*wordcount*sizeof(char));
         printf("%d",i);
     }
-    char delim[2] = {' ','\n'};
     char *token = strtok(s,delim); 
-    for(int i = 0;i<wordcount&&token!=NULL; i++){
+    wordcount = 0;
+    for(int i = 0;token!=NULL; i++){
         strcpy(tok[i],token); 
         token = strtok(NULL,delim);
+        wordcount++;
     } //tokenize string
     tok[wordcount] = NULL; // This is doing something to the first index of tok despite targeting last index
     return tok;
+}
+
+#define LSH_TOK_BUFSIZE 64
+#define LSH_TOK_DELIM " \t\r\n\a"
+char **lsh_split_line(char *line, int *position)
+{
+    *position = 0;
+    int bufsize = LSH_TOK_BUFSIZE;
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    token = strtok(line, LSH_TOK_DELIM);
+    while (token != NULL) {
+        printf("%d position \n",*position);
+        tokens[*position] = token;
+        (*position)++; // WHY ARE POINTERS SO WIERD
+
+        if (*position >= bufsize) {
+            bufsize += LSH_TOK_BUFSIZE;
+            tokens = realloc(tokens, bufsize * sizeof(char*));
+            if (!tokens) {
+                fprintf(stderr, "lsh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, LSH_TOK_DELIM);
+    }
+    tokens[*position] = NULL;
+    return tokens;
 }
 
 //free a 2d array easily
@@ -158,24 +196,27 @@ short what_the_fork(const char* s){
         return -1;
     } //fork failure
     if(pid==0){ //don't change dir acutally, this doesn't work as well as you'd like
-        unsigned short argc = count_words(s);
+        int argc = count_words(s);
         char* copy = malloc(strlen(s)*sizeof(char));
         strcpy(copy,s);
-        char** argv = sta(copy);
+        //char** argv = sta(copy);
+        char** argv = lsh_split_line(copy,&argc);
         //char* argv[3] = {"cat","led.sh",NULL}; //test version of argv that should always cat the test file
         //char** argv = string_to_args(s,argc);
         //argv[argc+1] = NULL;
         //char* args[] = {"echo","AAAAA",NULL};
         //fprint(args[0]);
-        fprint("thread check 1\n");
+        fprint("thread check\n");
         print2d(argv,argc); //prints entire array to stdout
-        fprint("thread check 2\n");
+        fprint("thread check EXEC\n");
         //printf("test");
         if(execvp(argv[0],argv)==-1){ //replaces current thread and execs argv
             fprint(strerror(errno));
             fprint("\n");
         }
-        free_2d(argv,argc); //will not execute unless invalid command
+        fprint("thread check FREE \n");
+        //free_2d(argv,argc); //will not execute unless invalid command
+        free(argv); // w h a t
         exit(0);
         fprint("should've exited");
     } //child process exec
