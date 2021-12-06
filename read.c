@@ -193,43 +193,6 @@ void print_prefix(const char* visible_directory){
     fprint(" $ "); //fancy close
 }
 
-void ls(const char *working_directory, bool list_all){
-    // BEGIN PARTIALLY BORROWED BLOCK
-    //##########################################################################
-    struct dirent *de;  // Pointer for directory entry
-    // opendir() returns a pointer of DIR type. 
-    DIR *dr = opendir(working_directory);
-    if (dr == NULL)  // opendir returns NULL if couldn't open directory
-    {
-        fprint("Could not open current directory" );
-        return;
-    }
-    // Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html
-    // for readdir()
-    while ((de = readdir(dr)) != NULL){ //prints all in dir
-        for(unsigned short i = 0; i<4&&(de = readdir(dr)) != NULL; i++){
-            char* filename = de->d_name;
-            if(!list_all){
-                while(filename[0]=='.'&&(de = readdir(dr)) != NULL){ //skip '.' files
-                    filename = de->d_name;
-                    //fprint(filename);
-                }
-                if(filename[0]=='.') //catch sneaky . files
-                    continue;
-                fprint(filename);
-            }
-            //fprint("\t");
-            fprint("\n");
-        }
-        //fprint("\n");
-    }
-    closedir(dr);   
-    //##########################################################################
-    // END PARTIALLY BORROWED BLOCK
-    // https://www.geeksforgeeks.org/c-program-list-files-sub-directories-directory/
-}
-
-
 //If refactor this,
 //  here's an idea
 //  instead of hardcoded chdir to home if ~
