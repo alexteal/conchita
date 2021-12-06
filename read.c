@@ -37,7 +37,7 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
     unsigned short num_commands = 4;
     char* commands[num_commands];
     commands[0] = "cd";
-    commands[1] = "ls"; 
+    commands[1] = "DEBUG";  //used to be ls
     commands[2] = "h"; //throwaway
     commands[3] = "exit";
     short index = -1; 
@@ -51,11 +51,13 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
     switch(index){
         case 0: //cd
             change_dir(s,working_directory,visible_directory,&index_of_next_word);
+
             return 1;
 
             break;
         case 1: //ls
-            ls(working_directory,0); //change second value to 1 for "ls -a"
+            //ls(working_directory,0); //change second value to 1 for "ls -a"
+            fprint("still alive");
             return 1;
             break;
         case 2: //h
@@ -96,7 +98,7 @@ void parse(const char* s,char* working_directory, char* visible_directory){
    // add forks/ exec here. 
    //
    //
-    if(what_the_fork(s) == 1){
+    if(fork_exec(s) == 1){
         return;
     }
     unsigned int argc = count_words(s);
@@ -107,7 +109,7 @@ void parse(const char* s,char* working_directory, char* visible_directory){
     return;
 
 }
-
+/* OFFICIALLY DEPRACATED
 //take a string, break it into individual strings and remove - if it's at the 
 //beginning of a word. Skip first word if its a commanda
 char** string_to_args(const char* s,const unsigned short argc){
@@ -123,6 +125,8 @@ char** string_to_args(const char* s,const unsigned short argc){
     }
     return argv;
 }
+*/
+/* OFFICALLY DEPRACTED
 //tokenize input
 //this is going to be a null terminated, undertermined size array
 #define delim " \t\r\n\a" //delimiters
@@ -145,7 +149,11 @@ char **sta(char* s){
     tok[wordcount] = NULL; // This is doing something to the first index of tok despite targeting last index
     return tok;
 }
+*/
 
+//###################################################################
+// BLOCK BORROWED FROM https://brennan.io/2015/01/16/write-a-shell-in-c/
+//###################################################################
 #define LSH_TOK_BUFSIZE 64
 #define LSH_TOK_DELIM " \t\r\n\a"
 char **lsh_split_line(char *line, int *position)
@@ -162,7 +170,6 @@ char **lsh_split_line(char *line, int *position)
 
     token = strtok(line, LSH_TOK_DELIM);
     while (token != NULL) {
-        printf("%d position \n",*position);
         tokens[*position] = token;
         (*position)++; // WHY ARE POINTERS SO WIERD
 
@@ -180,6 +187,7 @@ char **lsh_split_line(char *line, int *position)
     tokens[*position] = NULL;
     return tokens;
 }
+//####################################################################
 
 //free a 2d array easily
 void free_2d(char** s,const unsigned short argc){
@@ -189,7 +197,7 @@ void free_2d(char** s,const unsigned short argc){
     free(s);
 }
 
-short what_the_fork(const char* s){
+short fork_exec(const char* s){
     short pid = fork();
     if(pid==-1){
         fprint(strerror(errno));
@@ -199,17 +207,8 @@ short what_the_fork(const char* s){
         int argc = count_words(s);
         char* copy = malloc(strlen(s)*sizeof(char));
         strcpy(copy,s);
-        //char** argv = sta(copy);
         char** argv = lsh_split_line(copy,&argc);
-        //char* argv[3] = {"cat","led.sh",NULL}; //test version of argv that should always cat the test file
-        //char** argv = string_to_args(s,argc);
-        //argv[argc+1] = NULL;
-        //char* args[] = {"echo","AAAAA",NULL};
-        //fprint(args[0]);
-        fprint("thread check\n");
         print2d(argv,argc); //prints entire array to stdout
-        fprint("thread check EXEC\n");
-        //printf("test");
         if(execvp(argv[0],argv)==-1){ //replaces current thread and execs argv
             fprint(strerror(errno));
             fprint("\n");

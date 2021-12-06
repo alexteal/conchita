@@ -40,7 +40,7 @@ void free_2d(char** s,const unsigned short argc);
 void change_dir(const char *s,char *working_directory,char *visible_directory,unsigned int *index_of_next_word);
 
 //fork, look for bin, exec, return 1 for success, 0 no file, -1 failed exec
-short what_the_fork(const char* s);
+short fork_exec(const char* s);
 
 
 //print out everything in the current directory
