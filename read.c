@@ -34,12 +34,10 @@
 short parse_builtin(const char* s,char* working_directory, char* visible_directory){
     unsigned int index_of_next_word = 0;
     char *cmd = next_word(s,&index_of_next_word);
-    unsigned short num_commands = 4;
+    unsigned short num_commands = 2;
     char* commands[num_commands];
     commands[0] = "cd";
-    commands[1] = "DEBUG";  //used to be ls
-    commands[2] = "h"; //throwaway
-    commands[3] = "exit";
+    commands[1] = "exit";
     short index = -1; 
     for(int i = 0; i<num_commands; i++){
         if(strcmp(cmd,commands[i])==0){
@@ -55,14 +53,7 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
             return 1;
 
             break;
-        case 1: //ls
-            //ls(working_directory,0); //change second value to 1 for "ls -a"
-            fprint("still alive");
-            return 1;
-            break;
-        case 2: //h
-            break;
-        case 3: //exit
+        case 1: //exit
             fprint("Closing conchita...\n");
             exit(0);
             break;
@@ -82,9 +73,6 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
 //
 //
 void parse(const char* s,char* working_directory, char* visible_directory){
-    //char* current_word = next_word(s,index);  
-    //free(current_word);
-    //
     //exit code from parse_builtin
     short code = parse_builtin(s,working_directory, visible_directory);
     if(code>-1){
@@ -95,61 +83,13 @@ void parse(const char* s,char* working_directory, char* visible_directory){
         fprint("builtin parse failure\n");
     } //error code handling
 
-   // add forks/ exec here. 
-   //
-   //
     if(fork_exec(s) == 1){
         return;
     }
-    unsigned int argc = count_words(s);
-    char** argv = string_to_args(s,argc); //so i can do getopt() now
-    free_2d(argv,argc); //free
     fprint("command not found: ");
-    fprint(s);
     return;
 
 }
-/* OFFICIALLY DEPRACATED
-//take a string, break it into individual strings and remove - if it's at the 
-//beginning of a word. Skip first word if its a commanda
-char** string_to_args(const char* s,const unsigned short argc){
-    unsigned int index = 0;
-    char** argv; //may need to malloc?
-    argv = malloc(sizeof(char*)*argc);
-    for(int i = 0; i<argc+1; i++){
-        argv[i] = malloc(sizeof(char)*FILENAME_MAX);
-    } //now need to free this fancilly
-    argv[argc+1] = NULL;
-    for(int i = 0; i<strlen(s)&&(i<argc); i++){ //don't add random +1 unless you know what you're doing doofus
-        argv[i] = next_word(s,&index);
-    }
-    return argv;
-}
-*/
-/* OFFICALLY DEPRACTED
-//tokenize input
-//this is going to be a null terminated, undertermined size array
-#define delim " \t\r\n\a" //delimiters
-
-char **sta(char* s){
-    unsigned int length = strlen(s);
-    unsigned int wordcount = count_words(s);
-    char** tok = malloc(wordcount*sizeof(char*));
-    for(int i = 0; i<wordcount+1; i++){
-        tok[i] = malloc(length*wordcount*sizeof(char));
-        printf("%d",i);
-    }
-    char *token = strtok(s,delim); 
-    wordcount = 0;
-    for(int i = 0;token!=NULL; i++){
-        strcpy(tok[i],token); 
-        token = strtok(NULL,delim);
-        wordcount++;
-    } //tokenize string
-    tok[wordcount] = NULL; // This is doing something to the first index of tok despite targeting last index
-    return tok;
-}
-*/
 
 //###################################################################
 // BLOCK BORROWED FROM https://brennan.io/2015/01/16/write-a-shell-in-c/

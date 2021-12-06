@@ -25,16 +25,13 @@ short parse_builtin(const char* s, char* working_directory, char* visible_direct
 //what does this func do
 void parse(const char* s, char* working_directory, char* visible_directory);
 
+//parse borrowed from brennen.io
+char **lsh_split_line(char *line, int *position);
+
 //count all words in s
 unsigned int count_words(const char* s);
 
-//break a string into arguments. ignore first word
-char** string_to_args(const char* s,const unsigned short argcount);
-
-//new string to args, using split
-char** stas(char* s);
-
-//free STA
+//free 2d array
 void free_2d(char** s,const unsigned short argc);
 
 void change_dir(const char *s,char *working_directory,char *visible_directory,unsigned int *index_of_next_word);
