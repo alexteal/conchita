@@ -40,9 +40,6 @@ void change_dir(const char *s,char *working_directory,char *visible_directory,un
 short fork_exec(const char* s);
 
 
-//print out everything in the current directory
-void ls(const char *working_directory, bool list_all);
-
 // Copy file contents into a string
 //output is dynamic string, don't forget to free(s)
 // @param   char*   path    relative string path to read
