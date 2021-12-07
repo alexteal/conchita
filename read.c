@@ -71,7 +71,6 @@ short parse_builtin(const char* s,char* working_directory, char* visible_directo
 //  one to do system commands
 //  one to do inbuilt commands
 //
-//
 void parse(const char* s,char* working_directory, char* visible_directory){
     //exit code from parse_builtin
     short code = parse_builtin(s,working_directory, visible_directory);
@@ -138,16 +137,50 @@ void free_2d(char** s,const unsigned short argc){
 }
 
 short fork_exec(const char* s){
+    int argc = count_words(s);
+    char* copy = malloc(strlen(s)*sizeof(char));
+    strcpy(copy,s);
+    char** argv = lsh_split_line(copy,&argc);
+    int output_fd = 0; //default to stdin descriptor, but won't ever be used
+    // parse pipes
+    // open pipe
+    /*
+       int yos[2];
+       if(pipe(yos)==-1){
+       fprint("pipe failure\n");
+       fprint(strerror(errno));
+       fprint("\n");
+       } //attempt to create a pipe
+       */
+    //READ  IS 0
+    //WRITE IS 1
+    // writing to a file with io redir
+    for(int i = 0; i < argc; i++){
+        for(int j = 0; j<strlen(argv[i]); j++){
+            if(argv[i][j] == '>'){
+                if(j+1<=strlen(argv[i]))
+                    if(s[++j] == '>'){
+                        output_fd = open(argv[++i],O_WRONLY|O_APPEND|O_CREAT);
+                    }//append
+                output_fd = open(argv[++i], O_WRONLY | O_CREAT | O_TRUNC);
+            }//overwrite
+        } //traverse individual string
+    } //traverse list of strings
     short pid = fork();
     if(pid==-1){
         fprint(strerror(errno));
         return -1;
     } //fork failure
     if(pid==0){ //don't change dir acutally, this doesn't work as well as you'd like
-        int argc = count_words(s);
-        char* copy = malloc(strlen(s)*sizeof(char));
-        strcpy(copy,s);
-        char** argv = lsh_split_line(copy,&argc);
+        if(output_fd < 0){
+            fprint(strerror(errno));
+            fprint("\n");
+            exit(0);
+        } // error handling
+        else if (output_fd>0){
+            close(STDOUT_FILENO);
+            dup(output_fd);//redirect output to file
+        }
         print2d(argv,argc); //prints entire array to stdout
         if(execvp(argv[0],argv)==-1){ //replaces current thread and execs argv
             fprint(strerror(errno));
@@ -161,6 +194,8 @@ short fork_exec(const char* s){
     } //child process exec
     else{
         wait(NULL); //wait for process to fail/finish
+        if (output_fd>0)
+            close(output_fd);
         return 1;
     } //parent process exec
     return 0;
