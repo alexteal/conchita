@@ -12,6 +12,7 @@
 #include "read.h"    //Header file for this thing
 #include <dirent.h>  // ls command
 #define BUFFERSIZE 16
+#define DEBUG 1 // bool value for prints
 
 
 //feature list
@@ -147,25 +148,40 @@ short fork_exec(const char* s){
     /*
        int yos[2];
        if(pipe(yos)==-1){
-       fprint("pipe failure\n");
-       fprint(strerror(errno));
-       fprint("\n");
+       fdprint("pipe failure\n");
+       fdprint(strerror(errno));
+       fdprint("\n");
        } //attempt to create a pipe
        */
     //READ  IS 0
     //WRITE IS 1
     // writing to a file with io redir
-    for(int i = 0; i < argc; i++){
+    bool argFound = 0;
+    for(int i = 0; i < argc&&!argFound; i++){
         for(int j = 0; j<strlen(argv[i]); j++){
             if(argv[i][j] == '>'){
-                if(j+1<=strlen(argv[i]))
-                    if(s[++j] == '>'){
-                        output_fd = open(argv[++i],O_WRONLY|O_APPEND|O_CREAT);
+                fdprint("i/o redirect");
+                if(j+1<=strlen(argv[i])){
+                    if(argv[i][++j] == '>'){
+                        output_fd = open(argv[++i],O_WRONLY | O_APPEND | O_CREAT, 0666);
+                        argc = i;
+                        fdprint("append");
+                        argFound = 1;
+                        break;
                     }//append
-                output_fd = open(argv[++i], O_WRONLY | O_CREAT | O_TRUNC);
+                    else {
+                        output_fd = open(argv[++i], O_CREAT | O_TRUNC,S_IRWXU);
+                        // O_WRONLY | O_APPEND | O_CREAT, 0666
+                        argc = i;
+                        fdprint("truncate");
+                        argFound = 1;
+                        break;
+                    } // truncate
+                }// don't read possible nonexistent value
             }//overwrite
         } //traverse individual string
     } //traverse list of strings
+
     short pid = fork();
     if(pid==-1){
         fprint(strerror(errno));
@@ -186,11 +202,11 @@ short fork_exec(const char* s){
             fprint(strerror(errno));
             fprint("\n");
         }
-        fprint("thread check FREE \n");
+        fdprint("thread check FREE \n");
         //free_2d(argv,argc); //will not execute unless invalid command
         free(argv); // w h a t
         exit(0);
-        fprint("should've exited");
+        fdprint("should've exited");
     } //child process exec
     else{
         wait(NULL); //wait for process to fail/finish
@@ -217,10 +233,6 @@ unsigned int count_words(const char* s){
     return wordcount;
 }
 
-//fast write to stdout with linebreak;
-void fprint(const char* s){ 
-    write(STDOUT_FILENO,s,strlen(s));
-}
 
 void print_prefix(const char* visible_directory){
     fprint("[csci-1730] ");
@@ -349,66 +361,27 @@ char* read_stdin(int buffer_size){
 }
 
 
-char* read_file(char* path){
-    int fd;
-    if((fd = open(path,O_RDONLY)) == -1){
-        printf("Something went wrong reading the file\n");
-        close(fd);
-        return "";
-    }
-    int size = lseek(fd,(size_t)0, SEEK_END);
-    lseek(fd,(size_t)0,0); //reposition to beginning
-    char buffer[BUFFERSIZE];
-    char *file = malloc(size * sizeof *file);
-    int n;
-    if(file){
-        unsigned short index = 0;
-        while((n = read(fd,buffer,BUFFERSIZE)) > 0){
-            for(int i = 0; i<n; i++){
-                file[index++] = buffer[i];
-            }
-        } 
-    } // malloc succesful
-    close(fd);
-    return file;
-}//return string with plaintext of file
-
-char* read_file_bytes(char* path,int numbytes){ //setting numbytes as unsgined causes a multiversal collision. 
-    int fd;
-    if((fd = open(path,O_RDONLY)) == -1){
-        printf("Something went wrong reading the file\n");
-        close(fd);
-        return "";
-    }
-    char buffer[BUFFERSIZE];
-    //reposition to read only certain amount of bytes
-    lseek(fd,((numbytes)*-1), SEEK_END);
-    char *file = malloc(numbytes*sizeof(char));
-    //char file[numbytes];
-    int n;
-    if(file){
-        unsigned short index = 0;
-        while((n = read(fd,buffer,BUFFERSIZE)) > 0||index<numbytes){
-            for(int i = 0; index<numbytes&&i<n; i++){
-                file[index++] = buffer[i];
-            }
-        }
-    } // malloc succesful
-    close(fd);
-    return file;
-}//return string with plaintext of file
-
-
 //######################################################################
 // DEBUG FUNCTIONS
 // #####################################################################
 
 
 void print2d(char** argv, const int argc){
-    for(int i = 0; i<argc; i++){
-        printf("%d\t",i);
-        fprint(argv[i]);
-        fprint("\n");
+    if(DEBUG){
+        for(int i = 0; i<argc; i++){
+            printf("%d\t",i);
+            fdprint(argv[i]);
+            fdprint("\n");
+        }
     }
     return;
+}
+//fast write to stdout with linebreak;
+void fprint(const char* s){ 
+    write(STDOUT_FILENO,s,strlen(s));
+}
+//fast write to stdout with linebreak; DEBUG VERSION
+void fdprint(const char* s){ 
+    if(DEBUG)
+        write(STDOUT_FILENO,s,strlen(s));
 }

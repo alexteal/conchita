@@ -8,8 +8,6 @@ void print_prefix(const char* visible_directory);
 //store the last part of the directory in a string
 void getvwd(const char* current_path,char* visible_directory);
 
-//easy write to stdout
-void fprint(const char* s);
 
 // return the index of the next nonspace in a string
 //  
@@ -39,20 +37,7 @@ void change_dir(const char *s,char *working_directory,char *visible_directory,un
 //fork, look for bin, exec, return 1 for success, 0 no file, -1 failed exec
 short fork_exec(const char* s);
 
-
-// Copy file contents into a string
-//output is dynamic string, don't forget to free(s)
-// @param   char*   path    relative string path to read
-// @return  char*           string containing file contents
-char* read_file(char* path);
-
-//Copy file contents to a string, limited by amount of bytes.
-//output is dynamic string, don't forget to free(s)
-//Reads from index 0 to numbytes
-// @param   char*   path        relative string path
-// @param   uint    numbytes    amount of bytes to read
-// @return  char*               string containing file contents
-char* read_file_bytes(char* path, int numbytes);
+char** shorten_arg(char** argv, int arg_amount);
 
 // resize an array with defined amount of bytes
 //output is dynamic string, don't forget to free(s)
@@ -71,4 +56,8 @@ char* read_stdin(int buffer_size);
 //#############################################################################
 
 void print2d(char** argv, const int argc);
+
+//easy write to stdout
+void fprint(const char* s);
+void fdprint(const char* s);
 #endif
